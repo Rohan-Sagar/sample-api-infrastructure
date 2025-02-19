@@ -1,0 +1,44 @@
+# apps/v1 = API version for Deployment resource
+apiVersion: apps/v1
+# Deployment = manages a set of identical pods
+kind: Deployment
+metadata:
+  name: api-deployment
+  labels:
+    app: fastapi-app
+spec:
+  replicas: 2 # create 2 pods
+  selector:
+    matchLabels: # select pods to manage based on these labels
+      app: fastapi-app
+  template:
+    metadata:
+      labels:
+        app: fastapi-app # label that connects pods to deployment
+    spec:
+      containers:
+        - name: fastapi-container
+          image: api-infra:v2 # docker image to use for pods
+          ports:
+            - containerPort: 8000
+          resources: # resource constraints for the container
+            limits: # maximum resources allowed
+              memory: "128Mi" # 128 megabytes memory limit
+              cpu: "500m" # 500 millicpu = 0.5 CPU core limit
+            requests: # min resources needed
+              memory: "64Mi"
+              cpu: "250m"
+---
+# v1 = API version for Service resource
+apiVersion: v1
+# Service = provides stable networking for pods
+kind: Service
+metadata:
+  name: api-service
+spec:
+  type: NodePort # makes service accessible from outside cluster
+  selector: # select pods to route traffic to
+    app: fastapi-app
+  ports:
+    - port: 8000 # port service listens on
+      targetPort: 8000 # port to forward to in the pod
